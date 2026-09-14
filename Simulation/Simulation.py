@@ -3,7 +3,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import cos, sin
-from Core.Parameters import AURAParameters, DEFAULT_PARAMETERS
+
+from Core.Parameters import DEFAULT_PARAMETERS, AURAParameters
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,9 +30,9 @@ class SimulationStep:
 class DifferentialDriveSimulator:
     """Small-step, deterministic differential-drive kinematic model."""
 
-    def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS, state: RobotState = RobotState()) -> None:
+    def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS, state: RobotState | None = None) -> None:
         self.parameters = parameters
-        self.state = state
+        self.state = state if state is not None else RobotState()
 
     def step(self, command: WheelCommand, dt_s: float) -> SimulationStep:
         if dt_s <= 0:
@@ -47,5 +48,5 @@ class DifferentialDriveSimulator:
         self.state = next_state
         return SimulationStep(next_state, v, omega)
 
-    def reset(self, state: RobotState = RobotState()) -> None:
-        self.state = state
+    def reset(self, state: RobotState | None = None) -> None:
+        self.state = state if state is not None else RobotState()
