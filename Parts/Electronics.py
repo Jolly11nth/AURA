@@ -36,6 +36,8 @@ class ElectronicsPart:
         except ImportError as exc:
             raise RuntimeError("FreeCAD Part is required to build CAD geometry") from exc
 
+        # Keep the runtime import alive for the FreeCAD-only CAD boundary.
+        del Part
         controller = self._box_from_center(self.controller_center, self.controller_dimensions)
         battery = self._box_from_center(self.battery_center, self.battery_dimensions)
         return controller, battery
