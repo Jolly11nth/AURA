@@ -1,7 +1,14 @@
 """STEP export adapter for FreeCAD-backed AURA assemblies."""
 from __future__ import annotations
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
+
+
+@dataclass(frozen=True, slots=True)
+class STEPExportRequest:
+    """Backward-compatible STEP export request descriptor."""
+    output_path: Path
 
 
 def export_step(shapes: Iterable[Any], output_path: str | Path) -> Path:
