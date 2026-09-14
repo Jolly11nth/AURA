@@ -1,5 +1,3 @@
-import math
-
 import pytest
 
 from Simulation.Simulation import DifferentialDriveSimulator, RobotState, WheelCommand
