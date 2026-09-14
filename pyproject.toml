@@ -25,6 +25,13 @@ testpaths = ["tests"]
 target-version = "py312"
 line-length = 100
 
+[tool.ruff.lint]
+# The repository intentionally uses top-level, PascalCase package names
+# (Core, Parts, Assembly, etc.) as part of the frozen AURA architecture.
+# Keep Ruff focused on correctness-oriented lint rules rather than forcing
+# a package-layout rename or broad style migration at this stage.
+select = ["E", "F", "W", "B"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true
