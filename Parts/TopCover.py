@@ -23,5 +23,4 @@ class TopCoverPart:
             raise RuntimeError("FreeCAD Part is required to build CAD geometry") from exc
         e = self.parameters.envelope
         t = self.parameters.base.floor_thickness_mm
-        z = e.height_mm - t
-        return Part.makeBox(e.length_mm, e.width_mm, t, Part.Vector(0, 0, z))
+        return Part.makeBox(e.length_mm, e.width_mm, t, Part.Vector(0, 0, e.height_mm - t))
