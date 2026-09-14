@@ -13,6 +13,11 @@ def build_assembly(parameters: AURAParameters = DEFAULT_PARAMETERS) -> AURAAssem
     return AURAAssembly(parameters)
 
 
+def build_default_assembly() -> AURAAssembly:
+    """Backward-compatible factory for the standard AURA configuration."""
+    return build_assembly(DEFAULT_PARAMETERS)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="AURA robotics CAD framework")
     parser.add_argument("--profile", default="STANDARD", help="Named parameter profile")
