@@ -1,11 +1,14 @@
 [project]
 name = "aura-robotics"
-version = "0.1.0"
-description = "Autonomous Universal Robotic Assistant robotics framework scaffold."
+version = "0.5.0"
+description = "Autonomous Universal Robotic Assistant engineering and robotics framework."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Jolly Christopher" }]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "mypy>=1.10"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

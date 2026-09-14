@@ -1,81 +1,77 @@
 # AURA
 
-Autonomous Universal Robotic Assistant (AURA) is a modular robotics software framework scaffold for parametric CAD, simulation, manufacturing, export, and future Digital Twin integration.
+**Autonomous Universal Robotic Assistant** — a parametric robotics engineering framework for CAD, assembly, manufacturing definition, kinematic simulation, export, and future autonomy/digital-twin layers.
 
-## Architecture
+## Frozen architecture
 
 ```text
 AURA/
-├── Core/
-│   ├── Parameters.py
-│   ├── Geometry.py
-│   ├── Materials.py
-│   └── Utilities.py
-├── Parts/
-│   ├── Base.py
-│   ├── Shell.py
-│   ├── TopCover.py
-│   ├── Tray.py
-│   ├── Wheels.py
-│   └── Electronics.py
-├── Assembly/
-│   └── Assembly.py
-├── Manufacturing/
-│   ├── BOM.py
-│   └── Drawings.py
-├── Simulation/
-│   └── Simulation.py
-├── Export/
-│   ├── STEP.py
-│   ├── STL.py
-│   └── TechDraw.py
-└── Main.py
+├── Core/             # engineering parameters, geometry, materials, utilities
+├── Parts/            # parametric robot components
+├── Assembly/         # complete robot composition
+├── Manufacturing/    # BOM and drawing specifications
+├── Simulation/       # deterministic kinematic simulation
+├── Export/           # STEP, STL and TechDraw adapters
+├── tests/            # regression and integration tests
+└── Main.py           # application entry point
 ```
 
-## Engineering Principles
+## Engineering contract
 
-- Python 3.12+
-- Strong typing and immutable dataclass configuration
-- Single source of truth for engineering parameters in `Core/Parameters.py`
-- FreeCAD-independent core modules
-- Modular architecture with no circular dependencies
-- Unit-testable public API
+- `Core/Parameters.py` is the single source of engineering constants.
+- `Core/Geometry.py` is the single source of spatial calculations, frames, clearances, and motion envelopes.
+- Core engineering modules remain FreeCAD-independent.
+- CAD runtime imports occur only at build/export boundaries.
+- Configuration is immutable, typed, versioned, serializable, and validated.
+- No magic engineering numbers in downstream modules.
+- Existing public APIs are preserved where practical for backward compatibility.
 
-## Milestones
+## Current implementation
 
-- `v0.1.0` Project scaffold
-- `v0.2.0` Parameters frozen
-- `v0.3.0` Geometry complete
-- `v0.4.0` Parts complete
-- `v0.5.0` Assembly complete
-- `v0.6.0` Simulation complete
-- `v0.7.0` Manufacturing complete
-- `v0.8.0` Export complete
-- `v0.9.0` Integration testing
-- `v1.0.0` First production release
+### Parameters — schema 2.1
 
-## Sprint 1 Parameter Foundation
+The parameter model provides metadata, envelope/base/shell/tray/wheel/electronics/payload/manufacturing groups, relationship validation, JSON serialization, named profiles (`STANDARD`, `MINI`, `INDUSTRIAL`, `DEVELOPER`), and the backward-compatible `DEFAULT_PARAMETERS` alias.
 
-`Core/Parameters.py` defines schema version `2.1` and keeps the parameter model independent of FreeCAD. Every public parameter dataclass inherits from `ParameterGroup`, which provides `to_dict()` and `to_json()` serialization for CAD metadata, simulations, manufacturing exports, cloud synchronization, AI optimization, and future Digital Twin integrations.
+### Geometry — Sprints 1–4
 
-Each `AURAParameters` instance contains engineering metadata so generated artifacts can identify the robot name, version, manufacturer, author, CAD system, and units. Named configurations are exposed through `PARAMETER_REGISTRY` with `STANDARD`, `MINI`, `INDUSTRIAL`, and `DEVELOPER` profiles. `DEFAULT_PARAMETERS` remains available as a backward-compatible alias for the standard profile.
+Geometry owns 3D primitives, coordinate frames, rotations, rigid transforms, frame graphs, robot envelopes, placement, clearance volumes, service zones, camera/sensor regions, wheel/tray motion envelopes, collision checks, and structured clearance reports.
 
-Sprint 1 intentionally does not introduce FreeCAD, geometry generation, simulation behavior, manufacturing logic, AI logic, Digital Twin synchronization, or motion planning. Those layers should consume this stable, versioned parameter API in later milestones.
+### Parts and assembly
 
-## Geometry Sprint 2
+Base, shell, top cover, tray, wheels, and electronics are now parametric descriptors. When FreeCAD is installed, each part can build a Part shape and `AURAAssembly.build_document()` creates a complete CAD document.
 
-`Core/Geometry.py` is the permanent geometric source of truth for AURA. It defines the coordinate-frame vocabulary, derives robot envelopes from `Core/Parameters.py`, and provides a placement solver for canonical mounting points. Modules outside `Core/Geometry.py` must request permanent mounting coordinates from the geometry layer instead of calculating their own positions.
+### Manufacturing
 
-The robot coordinate convention uses a robot-centered ground-plane origin: `+Z` points upward, `+X` points toward the rear in the 2D planning view, `+Y` points to the robot left, and `-Y` points to the robot right. This convention is FreeCAD-independent and must be preserved by CAD, simulation, manufacturing, export, and Digital Twin integrations.
+`Manufacturing/BOM.py` generates a deterministic BOM from the parameter model. `Manufacturing/Drawings.py` generates parameter-driven drawing specifications.
 
-## Geometry Sprint 3
+### Simulation
 
-`Core/Geometry.py` now owns all coordinate transformations through immutable rotation primitives, `RigidTransform`, `Pose3D`, and a validated `FrameGraph`. Every coordinate conversion in AURA must pass through this module; downstream packages must not implement independent frame-conversion logic.
+`Simulation/Simulation.py` provides a deterministic differential-drive kinematic model suitable for regression tests and early motion integration.
 
-The Sprint 3 frame graph starts with `world -> robot` and branches to base, shell, left wheel, right wheel, tray, battery, camera, and sensor frames. The public `GeometryEngine` API supports frame lookup, camera pose construction, transform retrieval, point conversion, and vector conversion without introducing CAD, physics, SLAM, motion-planning, or FreeCAD dependencies.
+### Export
 
-## Geometry Sprint 4
+STEP, STL, and TechDraw adapters are isolated behind explicit FreeCAD runtime boundaries so CI does not require a CAD installation.
 
-`Core/Geometry.py` now includes the `ClearanceSolver`, AURA's first geometric design-rule-checking subsystem. It models component occupied, clearance, service, and movement volumes; provides collision and minimum-clearance APIs; represents wheel motion, tray opening paths, camera visibility, ultrasonic sensor regions, and service zones; and returns structured `ClearanceReport` results.
+## Development
 
-Every permanent clearance, collision, motion-envelope, and serviceability calculation must originate from `Core/Geometry.py`. Sprint 4 remains limited to geometric checks and intentionally excludes physics simulation, structural analysis, dynamics, path planning, finite element analysis, CAD generation, and FreeCAD placement objects.
+Python 3.12+ is required. Development dependencies are declared under `[project.optional-dependencies].dev`.
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+python -m ruff check .
+python -m mypy
+```
+
+The GitHub Actions workflow runs compilation, tests, linting, and type checking on pushes and pull requests.
+
+## Status
+
+- `v0.1` scaffold: complete
+- `v0.2` parameter foundation: complete
+- `v0.3` geometry foundation: complete
+- `v0.4` geometry clearance engine: complete
+- `v0.5` parametric parts, assembly, manufacturing definitions, simulation, export boundaries: **in progress / integration stage**
+- `v1.0` production robotics platform: not yet claimed
+
+AURA is not considered production-ready merely because the software framework builds. Physical validation, FreeCAD model review, tolerance verification, electronics integration, motor/driver validation, safety analysis, hardware-in-the-loop testing, and field testing remain mandatory engineering gates.
