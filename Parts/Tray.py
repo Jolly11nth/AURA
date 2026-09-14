@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from Core.Geometry import GeometryEngine, Point3D
 from Core.Parameters import AURAParameters, DEFAULT_PARAMETERS
 
 
@@ -16,14 +17,20 @@ class TrayPart:
         t = self.parameters.tray
         return t.length_mm, t.width_mm, t.depth_mm
 
+    @property
+    def origin(self) -> Point3D:
+        return GeometryEngine.placement_solver(self.parameters).tray_origin()
+
     def build_shape(self) -> Any:
         try:
             import Part  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError("FreeCAD Part is required to build CAD geometry") from exc
-        t = self.parameters.tray
-        e = self.parameters.envelope
-        x = (e.length_mm - t.length_mm) / 2
-        y = (e.width_mm - t.width_mm) / 2
-        z = e.ground_clearance_mm + self.parameters.base.floor_thickness_mm
-        return Part.makeBox(t.length_mm, t.width_mm, t.depth_mm, Part.Vector(x, y, z))
+        origin = self.origin
+        length_mm, width_mm, depth_mm = self.dimensions
+        return Part.makeBox(
+            length_mm,
+            width_mm,
+            depth_mm,
+            Part.Vector(origin.x_mm, origin.y_mm, origin.z_mm),
+        )
