@@ -16,7 +16,11 @@ class BasePart:
 
     @property
     def dimensions(self) -> BoxEnvelope:
-        return GeometryEngine.dimensions(self.parameters.envelope.length_mm, self.parameters.envelope.width_mm, self.parameters.base.floor_thickness_mm)
+        return GeometryEngine.dimensions(
+            self.parameters.envelope.length_mm,
+            self.parameters.envelope.width_mm,
+            self.parameters.base.floor_thickness_mm,
+        )
 
     @property
     def envelope(self) -> BoxEnvelope:
@@ -24,13 +28,25 @@ class BasePart:
 
     @property
     def bounding_box(self) -> BoundingBox:
-        box = GeometryEngine.bounding_box_from_origin(self.dimensions)
-        return BoundingBox(Point3D(0.0, 0.0, self.parameters.envelope.ground_clearance_mm), box.dimensions)
+        robot_envelope = GeometryEngine.robot_envelope(self.parameters)
+        return BoundingBox(
+            origin=Point3D(
+                x_mm=robot_envelope.outer_bounding_box.origin.x_mm,
+                y_mm=robot_envelope.outer_bounding_box.origin.y_mm,
+                z_mm=self.parameters.envelope.ground_clearance_mm,
+            ),
+            dimensions=self.dimensions,
+        )
 
     def build_shape(self) -> Any:
         try:
             import Part  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError("FreeCAD Part is required to build CAD geometry") from exc
-        e = self.parameters.envelope
-        return Part.makeBox(e.length_mm, e.width_mm, self.parameters.base.floor_thickness_mm, Part.Vector(0, 0, e.ground_clearance_mm))
+        box = self.bounding_box
+        return Part.makeBox(
+            box.dimensions.length_mm,
+            box.dimensions.width_mm,
+            box.dimensions.height_mm,
+            Part.Vector(box.origin.x_mm, box.origin.y_mm, box.origin.z_mm),
+        )
