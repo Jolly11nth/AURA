@@ -1,6 +1,5 @@
 """Manufacturing drawing specifications derived from AURA parameters."""
 from __future__ import annotations
-
 from dataclasses import dataclass
 from Core.Parameters import AURAParameters, DEFAULT_PARAMETERS
 
@@ -12,6 +11,13 @@ class DrawingSpec:
     width_mm: float
     height_mm: float
     notes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True, slots=True)
+class DrawingRequest:
+    """Original scaffold request retained for compatibility."""
+    part_number: str
+    revision: str
 
 
 def generate_drawing_specs(parameters: AURAParameters = DEFAULT_PARAMETERS) -> tuple[DrawingSpec, ...]:
