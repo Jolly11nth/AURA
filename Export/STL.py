@@ -1,7 +1,14 @@
 """STL export adapter for FreeCAD-backed AURA assemblies."""
 from __future__ import annotations
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+
+@dataclass(frozen=True, slots=True)
+class STLExportRequest:
+    """Backward-compatible STL export request descriptor."""
+    output_path: Path
 
 
 def export_stl(shape: Any, output_path: str | Path, *, linear_deflection: float = 0.1, angular_deflection: float = 0.2) -> Path:
