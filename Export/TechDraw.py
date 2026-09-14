@@ -1,15 +1,18 @@
 """Technical drawing export adapter for FreeCAD."""
 from __future__ import annotations
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 
-def export_techdraw(document: Any, page_name: str, output_path: str | Path) -> Path:
-    """Export an existing FreeCAD TechDraw page to PDF.
+@dataclass(frozen=True, slots=True)
+class TechDrawExportRequest:
+    """Backward-compatible TechDraw export request descriptor."""
+    output_path: Path
 
-    The page/view layout is intentionally owned by the CAD document; this adapter
-    only performs the final export so drawing generation remains deterministic.
-    """
+
+def export_techdraw(document: Any, page_name: str, output_path: str | Path) -> Path:
+    """Export an existing FreeCAD TechDraw page to PDF."""
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)
     page = document.getObject(page_name)
