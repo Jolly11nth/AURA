@@ -27,7 +27,7 @@ class WheelPart:
             raise RuntimeError("FreeCAD Part is required to build CAD geometry") from exc
         w = self.parameters.wheels
         r = w.diameter_mm / 2.0
-        return tuple(
+        shapes = tuple(
             Part.makeCylinder(
                 r,
                 w.width_mm,
@@ -35,7 +35,8 @@ class WheelPart:
                 Part.Vector(0, 1, 0),
             )
             for c in (self.left_center, self.right_center)
-        )  # type: ignore[return-value]
+        )
+        return shapes
 
 
 # Original scaffold name retained for compatibility.
