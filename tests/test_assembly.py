@@ -1,7 +1,5 @@
 from Core.Geometry import (
     CoordinateFrame,
-    FrameGraph,
-    FrameNode,
     GeometryEngine,
     ORIGIN,
     Point3D,
@@ -82,7 +80,7 @@ def test_wheel_packaging_is_symmetric_about_robot_centerline() -> None:
 
 
 def _box_from_origin(origin: Point3D, dimensions: tuple[float, float, float]):
-    from Core.Geometry import Dimensions3D, GeometryEngine
+    from Core.Geometry import GeometryEngine
 
     return GeometryEngine.bounding_box_from_origin(
         GeometryEngine.dimensions(*dimensions),
