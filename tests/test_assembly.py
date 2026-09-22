@@ -1,5 +1,4 @@
 from Core.Geometry import CoordinateFrame, GeometryEngine, ORIGIN, Point3D
-from Core.Parameters import DEFAULT_PARAMETERS
 from Main import build_default_assembly
 
 
@@ -37,21 +36,27 @@ def test_part_origins_and_centres_are_geometry_authoritative() -> None:
     assert assembly.electronics.battery_center == solver.battery_center()
 
 
-def test_geometry_mounting_points_transform_back_to_robot_frame() -> None:
+def test_canonical_frame_origins_transform_to_robot_placements() -> None:
     engine = GeometryEngine()
-    solver = engine.placement_solver(DEFAULT_PARAMETERS)
+    solver = engine.placement_solver()
     graph = solver.frame_graph()
 
-    for frame, point in (
+    frame_origins = (
         (CoordinateFrame.ROBOT.value, ORIGIN),
         (CoordinateFrame.TRAY.value, solver.tray_origin()),
         ("left_wheel", solver.wheel_center("left")),
         ("right_wheel", solver.wheel_center("right")),
         (CoordinateFrame.CAMERA.value, solver.camera_mount()),
         ("battery", solver.battery_center()),
-    ):
-        transformed = graph.transform_point(point, from_frame=frame, to_frame=CoordinateFrame.ROBOT.value)
-        assert transformed == point if frame == CoordinateFrame.ROBOT.value else transformed == point
+    )
+
+    for frame, expected_robot_point in frame_origins:
+        transformed = graph.transform_point(
+            ORIGIN,
+            from_frame=frame,
+            to_frame=CoordinateFrame.ROBOT.value,
+        )
+        assert transformed == expected_robot_point
 
 
 def test_robot_envelope_contains_the_base_and_tray() -> None:
