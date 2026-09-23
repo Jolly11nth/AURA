@@ -96,7 +96,8 @@ def test_camera_and_sensor_geometry_use_canonical_mounts() -> None:
     ):
         cone = engine.clearance_solver().ultrasonic_detection_cone(sensor_name)
         assert cone.sensor_name == sensor_name
-        assert cone.region.contains_point(placements.sensor_mount(sensor_name))
+        assert not cone.region.contains_point(placements.sensor_mount(sensor_name))
+        assert cone.region.max_point.x_mm == placements.sensor_mount(sensor_name).x_mm - cone.blind_zone_mm
 
 
 def test_assembly_exposes_one_geometry_validation_report() -> None:
