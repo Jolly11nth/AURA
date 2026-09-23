@@ -957,6 +957,7 @@ class ClearanceSolver:
     EXTERNAL_SERVICE_ZONES: Final[frozenset[str]] = frozenset(
         {"usb_access", "power_switch", "speaker_vent"}
     )
+    EXTERNAL_COMPONENTS: Final[frozenset[str]] = frozenset({"camera"})
 
     def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS) -> None:
         self.parameters = parameters
@@ -990,7 +991,18 @@ class ClearanceSolver:
         placed = self._component_at_pose(component, pose)
         findings: list[ClearanceFinding] = []
         minimum = self._minimum_distance_to_envelope(placed.volumes.required_clearance)
-        if not self._robot_envelope.outer_bounding_box.contains_box(placed.volumes.required_clearance):
+        outer_envelope = self._robot_envelope.outer_bounding_box
+        if placed.name in self.EXTERNAL_COMPONENTS:
+            if not outer_envelope.intersects(placed.volumes.occupied):
+                findings.append(
+                    ClearanceFinding(
+                        ClearanceStatus.FAIL,
+                        "external component is detached from robot envelope",
+                        placed.name,
+                        "Keep the external component physically mounted to the robot envelope.",
+                    )
+                )
+        elif not outer_envelope.contains_box(placed.volumes.required_clearance):
             findings.append(
                 ClearanceFinding(
                     ClearanceStatus.FAIL,
