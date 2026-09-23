@@ -66,6 +66,16 @@ def test_wheel_motion_envelopes_are_symmetric() -> None:
     assert left.rotation_envelope.center.z_mm == right.rotation_envelope.center.z_mm
 
 
+def test_wheel_motion_allowance_is_not_required_body_clearance() -> None:
+    assembly = build_default_assembly()
+    solver = GeometryEngine.clearance_solver(assembly.parameters)
+
+    for side in ("left", "right"):
+        wheel = solver.component(f"{side}_wheel")
+        assert wheel.volumes.required_clearance == wheel.volumes.occupied
+        assert wheel.volumes.movement != wheel.volumes.required_clearance
+
+
 def test_tray_motion_envelope_has_explicit_opening_travel() -> None:
     assembly = build_default_assembly()
     solver = GeometryEngine.clearance_solver(assembly.parameters)
