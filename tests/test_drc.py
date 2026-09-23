@@ -62,14 +62,13 @@ def test_external_camera_must_remain_physically_mounted() -> None:
 
 
 def test_tray_container_collisions_are_classified_as_intentional() -> None:
-    solver = GeometryEngine.clearance_solver()
-    tray = solver.component("tray")
+    report = build_default_assembly().validate_geometry()
 
-    for contained_name in ("battery", "motherboard"):
-        contained = solver.component(contained_name)
-        report = solver.can_place(tray, tray.pose, existing_components=(contained,))
-        assert report.status is not ClearanceStatus.FAIL
-        assert not any(
-            f"collides with {contained_name}" in item.message
-            for item in report.violations
-        )
+    assert report.status is not ClearanceStatus.FAIL
+    assert not any(
+        "tray collides with battery" in item.message
+        or "tray collides with motherboard" in item.message
+        or "battery collides with tray" in item.message
+        or "motherboard collides with tray" in item.message
+        for item in report.violations
+    )
