@@ -954,6 +954,9 @@ class ClearanceSolver:
     WHEEL_SUSPENSION_ALLOWANCE_MM: Final[float] = 8.0
     WHEEL_TURNING_CLEARANCE_MM: Final[float] = 6.0
     TRAY_OPEN_DISTANCE_MM: Final[float] = 160.0
+    EXTERNAL_SERVICE_ZONES: Final[frozenset[str]] = frozenset(
+        {"usb_access", "power_switch", "speaker_vent"}
+    )
 
     def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS) -> None:
         self.parameters = parameters
@@ -1021,7 +1024,12 @@ class ClearanceSolver:
         """Return the wheel rotation and clearance envelope for ``side``."""
         component = self._wheel_component(side)
         rotation = component.volumes.movement
-        chassis_interference = not self._robot_envelope.outer_bounding_box.contains_box(rotation)
+        # The wheel may use the space immediately outside the body envelope while turning.
+        # Chassis interference therefore checks the physical wheel envelope, not its
+        # external motion allowance.
+        chassis_interference = not self._robot_envelope.outer_bounding_box.contains_box(
+            component.volumes.occupied
+        )
         return WheelMotionEnvelope(
             wheel_name=f"{side.lower()}_wheel",
             rotation_envelope=rotation,
@@ -1162,7 +1170,8 @@ class ClearanceSolver:
         warnings: list[ClearanceFinding] = []
         minimum = self._minimum_distance_to_envelope(self._robot_envelope.usable_envelope)
         for name, zone in self.service_zones().items():
-            if not self._robot_envelope.outer_bounding_box.intersects(zone):
+            intersects_envelope = self._robot_envelope.outer_bounding_box.intersects(zone)
+            if not intersects_envelope and name not in self.EXTERNAL_SERVICE_ZONES:
                 findings.append(
                     ClearanceFinding(
                         ClearanceStatus.FAIL,
