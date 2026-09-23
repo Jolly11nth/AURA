@@ -958,6 +958,12 @@ class ClearanceSolver:
         {"usb_access", "power_switch", "speaker_vent"}
     )
     EXTERNAL_COMPONENTS: Final[frozenset[str]] = frozenset({"camera"})
+    INTENTIONAL_CONTAINMENT_PAIRS: Final[frozenset[frozenset[str]]] = frozenset(
+        {
+            frozenset({"tray", "battery"}),
+            frozenset({"tray", "motherboard"}),
+        }
+    )
 
     def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS) -> None:
         self.parameters = parameters
@@ -1157,7 +1163,8 @@ class ClearanceSolver:
             for other in components[index + 1 :]:
                 distance = self.minimum_clearance(component, other)
                 minimum = min(minimum, distance)
-                if self.has_collision(component, other) and component.name != "tray":
+                pair = frozenset({component.name, other.name})
+                if self.has_collision(component, other) and pair not in self.INTENTIONAL_CONTAINMENT_PAIRS:
                     findings.append(
                         ClearanceFinding(
                             ClearanceStatus.FAIL,
