@@ -954,6 +954,16 @@ class ClearanceSolver:
     WHEEL_SUSPENSION_ALLOWANCE_MM: Final[float] = 8.0
     WHEEL_TURNING_CLEARANCE_MM: Final[float] = 6.0
     TRAY_OPEN_DISTANCE_MM: Final[float] = 160.0
+    EXTERNAL_SERVICE_ZONES: Final[frozenset[str]] = frozenset(
+        {"usb_access", "power_switch", "speaker_vent"}
+    )
+    EXTERNAL_COMPONENTS: Final[frozenset[str]] = frozenset({"camera"})
+    INTENTIONAL_CONTAINMENT_PAIRS: Final[frozenset[frozenset[str]]] = frozenset(
+        {
+            frozenset({"tray", "battery"}),
+            frozenset({"tray", "motherboard"}),
+        }
+    )
 
     def __init__(self, parameters: AURAParameters = DEFAULT_PARAMETERS) -> None:
         self.parameters = parameters
@@ -987,7 +997,18 @@ class ClearanceSolver:
         placed = self._component_at_pose(component, pose)
         findings: list[ClearanceFinding] = []
         minimum = self._minimum_distance_to_envelope(placed.volumes.required_clearance)
-        if not self._robot_envelope.outer_bounding_box.contains_box(placed.volumes.required_clearance):
+        outer_envelope = self._robot_envelope.outer_bounding_box
+        if placed.name in self.EXTERNAL_COMPONENTS:
+            if not outer_envelope.intersects(placed.volumes.occupied):
+                findings.append(
+                    ClearanceFinding(
+                        ClearanceStatus.FAIL,
+                        "external component is detached from robot envelope",
+                        placed.name,
+                        "Keep the external component physically mounted to the robot envelope.",
+                    )
+                )
+        elif not outer_envelope.contains_box(placed.volumes.required_clearance):
             findings.append(
                 ClearanceFinding(
                     ClearanceStatus.FAIL,
@@ -1021,7 +1042,12 @@ class ClearanceSolver:
         """Return the wheel rotation and clearance envelope for ``side``."""
         component = self._wheel_component(side)
         rotation = component.volumes.movement
-        chassis_interference = not self._robot_envelope.outer_bounding_box.contains_box(rotation)
+        # The wheel may use the space immediately outside the body envelope while turning.
+        # Chassis interference therefore checks the physical wheel envelope, not its
+        # external motion allowance.
+        chassis_interference = not self._robot_envelope.outer_bounding_box.contains_box(
+            component.volumes.occupied
+        )
         return WheelMotionEnvelope(
             wheel_name=f"{side.lower()}_wheel",
             rotation_envelope=rotation,
@@ -1137,7 +1163,8 @@ class ClearanceSolver:
             for other in components[index + 1 :]:
                 distance = self.minimum_clearance(component, other)
                 minimum = min(minimum, distance)
-                if self.has_collision(component, other) and component.name != "tray":
+                pair = frozenset({component.name, other.name})
+                if self.has_collision(component, other) and pair not in self.INTENTIONAL_CONTAINMENT_PAIRS:
                     findings.append(
                         ClearanceFinding(
                             ClearanceStatus.FAIL,
@@ -1162,7 +1189,8 @@ class ClearanceSolver:
         warnings: list[ClearanceFinding] = []
         minimum = self._minimum_distance_to_envelope(self._robot_envelope.usable_envelope)
         for name, zone in self.service_zones().items():
-            if not self._robot_envelope.outer_bounding_box.intersects(zone):
+            intersects_envelope = self._robot_envelope.outer_bounding_box.intersects(zone)
+            if not intersects_envelope and name not in self.EXTERNAL_SERVICE_ZONES:
                 findings.append(
                     ClearanceFinding(
                         ClearanceStatus.FAIL,
@@ -1270,7 +1298,11 @@ class ClearanceSolver:
         return ComponentGeometry(
             name=f"{side.lower()}_wheel",
             pose=Pose3D(center, Rotation3D.identity(), CoordinateFrame.ROBOT.value),
-            volumes=ClearanceVolume(occupied, movement, movement, movement),
+            # Wheel movement allowance is intentionally external to the body envelope.
+            # Keep physical occupancy as the required packaging volume; motion
+            # allowance remains available through movement for dedicated
+            # wheel-motion checks.
+            volumes=ClearanceVolume(occupied, occupied, movement, movement),
         )
 
     def _camera_component(self) -> ComponentGeometry:

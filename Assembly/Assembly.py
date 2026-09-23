@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from Core.Geometry import ClearanceReport, GeometryEngine
 from Core.Parameters import AURAParameters, DEFAULT_PARAMETERS
 from Parts.Base import BasePart
 from Parts.Electronics import ElectronicsPart
@@ -32,6 +33,10 @@ class AURAAssembly:
         object.__setattr__(self, "tray", TrayPart(self.parameters))
         object.__setattr__(self, "wheels", WheelPart(self.parameters))
         object.__setattr__(self, "electronics", ElectronicsPart(self.parameters))
+
+    def validate_geometry(self) -> ClearanceReport:
+        """Return the canonical Geometry validation report for this assembly."""
+        return GeometryEngine(self.parameters).validate_robot()
 
     @property
     def parts(self) -> tuple[Any, ...]:
