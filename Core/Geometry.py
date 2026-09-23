@@ -1298,7 +1298,11 @@ class ClearanceSolver:
         return ComponentGeometry(
             name=f"{side.lower()}_wheel",
             pose=Pose3D(center, Rotation3D.identity(), CoordinateFrame.ROBOT.value),
-            volumes=ClearanceVolume(occupied, movement, movement, movement),
+            # Wheel movement allowance is intentionally external to the body envelope.
+            # Keep physical occupancy as the required packaging volume; motion
+            # allowance remains available through movement for dedicated
+            # wheel-motion checks.
+            volumes=ClearanceVolume(occupied, occupied, movement, movement),
         )
 
     def _camera_component(self) -> ComponentGeometry:
