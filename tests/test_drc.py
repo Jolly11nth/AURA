@@ -1,4 +1,4 @@
-""""Focused engineering DRC invariants for AURA."""
+"""Focused engineering DRC invariants for AURA."""
 
 from Core.Geometry import ClearanceStatus, GeometryEngine, Point3D, Pose3D, Rotation3D
 from Main import build_default_assembly
@@ -59,4 +59,3 @@ def test_external_camera_must_remain_physically_mounted() -> None:
 
     assert report.status is ClearanceStatus.FAIL
     assert any("detached" in item.message for item in report.violations)
-"
